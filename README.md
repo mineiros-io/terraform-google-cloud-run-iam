@@ -6,7 +6,7 @@
 
 # terraform-google-cloud-run-iam
 
-A [Terraform] module for [Google Cloud Platform (GCP)][gcp].
+A [Terraform](https://www.terraform.io) module to create a [Google Cloud Run IAM](https://cloud.google.com/run/docs/reference/iam/roles) on [Google Cloud Services (GCP)](https://cloud.google.com/).
 
 **_This module supports Terraform version 1
 and is compatible with the Terraform Google Provider version 3._**
@@ -34,40 +34,11 @@ secure, and production-grade cloud infrastructure.
 
 ## Module Features
 
-<!-- info: please adjust the following text -->
+This module implements the following terraform resources:
 
-This module implements the following terraform resources
-
-- `google_resource`
-- `google_something_else`
-
-and supports additional features of the following modules:
-
-<!-- markdown-link-check-disable -->
-- [mineiros-io/something/google](https://github.com/mineiros-io/terraform-google-something)
-<!-- markdown-link-check-enable -->
-
-<!--
-These are some of our custom features:
-
-- **Default Security Settings**:
-  secure by default by setting security to `true`, additional security can be added by setting some feature to `enabled`
-
-- **Standard Module Features**:
-  Cool Feature of the main resource, tags
-
-- **Extended Module Features**:
-  Awesome Extended Feature of an additional related resource,
-  and another Cool Feature
-
-- **Additional Features**:
-  a Cool Feature that is not actually a resource but a cool set up from us
-
-- _Features not yet implemented_:
-  Standard Features missing,
-  Extended Features planned,
-  Additional Features planned
--->
+- `google_cloud_run_service_iam_binding`
+- `google_cloud_run_service_iam_member`
+- `google_cloud_run_service_iam_policy`
 
 ## Getting Started
 
@@ -76,6 +47,11 @@ Most basic usage just setting required arguments:
 ```hcl
 module "terraform-google-cloud-run-iam" {
   source = "github.com/mineiros-io/terraform-google-cloud-run-iam?ref=v0.1.0"
+
+  service  = "service-name"
+  location = google_cloud_run_service.default.location
+  role     = "roles/viewer"
+  members  = ["user:member@example.com"]
 }
 ```
 
@@ -107,58 +83,94 @@ See [variables.tf] and [examples/] for details and use-cases.
 
 #### Main Resource Configuration
 
-<!-- Example of a required variable:
+- **`service`**: **_(Required `string`)_**
 
-- **`name`**: **_(Required `string`)_**
+  Used to find the parent resource to bind the IAM policy to.
 
-  The name of the resource.
+- **`location`**: **_(Required `string`)_**
 
-  Default is `"name"`.
+  he location of the cloud run instance. eg us-central1 Used to find the parent resource to bind the IAM policy to.
 
--->
+- **`members`**: **_(Optional `set(string)`)_
 
-<!-- Example of an optional variable:
+  Identities that will be granted the privilege in role. Each entry can have one of the following values:
+  - `allUsers`: A special identifier that represents anyone who is on the internet; with or without a Google account.
+  - `allAuthenticatedUsers`: A special identifier that represents anyone who is authenticated with a Google account or a service account.
+  - `user:{emailid}`: An email address that represents a specific Google account. For example, alice@gmail.com or joe@example.com.
+  - `serviceAccount:{emailid}`: An email address that represents a service account. For example, my-other-app@appspot.gserviceaccount.com.
+  - `group:{emailid}`: An email address that represents a Google group. For example, admins@example.com.
+  - `domain:{domain}`: A G Suite domain (primary, instead of alias) name that represents all the users of that domain. For example, google.com or example.com.
+  - `projectOwner:projectid`: Owners of the given project. For example, `projectOwner:my-example-project`
+  - `projectEditor:projectid`: Editors of the given project. For example, `projectEditor:my-example-project`
+  - `projectViewer:projectid`: Viewers of the given project. For example, `projectViewer:my-example-project`
 
-- **`name`**: _(Optional `string`)_
+  Default is `[]`.
 
-  The name of the resource.
+- **`role`**: _(Optional `string`)_
 
-  Default is `"name"`.
+  The role that should be applied. Note that custom roles must be of the format `[projects|organizations]/{parent-name}/roles/{role-name}`.
 
--->
+- **`project`**: _(Optional `string`)_
 
-<!-- Example of an object:
-     - We use inline documentation to describe complex objects or lists/maps of complex objects.
-     - Please indent each level with 2 spaces so the documentation is rendered in a readable way.
+  The ID of the project in which the resource belongs. If it is not provided, the project will be parsed from the identifier of the parent resource. If no project is provided in the parent identifier and no project is specified, the provider project is used.
 
-- **`user`**: _(Optional `object(user)`)_
+- **`authoritative`**: _(Optional `bool`)_
 
-  A user object.
+  Whether to exclusively set (authoritative mode) or add (non-authoritative/additive mode) members to the role.
+
+  Default is `true`.
+
+- **`policy_bindings`**: _(Optional `list(policy_bindings)`)_
+
+  A list of IAM policy bindings.
 
   Example
 
   ```hcl
-  user = {
-    name        = "marius"
-    description = "The guy from Berlin."
-  }
+  policy_bindings = [{
+    role    = "roles/viewer"
+    members = ["user:member@example.com"]
+  }]
   ```
 
-  Default is `{}`.
+  Each `policy_bindings` object accepts the following fields:
 
-  A/Each `user` object can have the following fields:
+  - **`role`**: **_(Required `string`)_**
 
-  - **`name`**: **_(Required `string`)_**
+    The role that should be applied.
 
-    The Name of the user.
+  - **`members`**: _(Optional `set(string)`)_
 
-  - **`description`**: _(Optional `decription`)_
+    Identities that will be granted the privilege in `role`.
 
-    A description describing the user in more detail.
+    Default is `var.members`.
 
-    Default is `""`.
+  - **`condition`**: _(Optional `object(condition)`)_
 
--->
+    An IAM Condition for a given binding.
+
+    Example
+
+    ```hcl
+    condition = {
+      expression = "request.time < timestamp(\"2022-01-01T00:00:00Z\")"
+      title      = "expires_after_2021_12_31"
+    }
+    ```
+
+    A `condition` object accepts the following fields:
+
+    - **`expression`**: **_(Required `string`)_**
+
+      Textual representation of an expression in Common Expression Language syntax.
+
+    - **`title`**: **_(Required `string`)_**
+
+      A title for the expression, i.e. a short string describing its purpose.
+
+    - **`description`**: _(Optional `string`)_
+
+      An optional description of the expression. This is a longer text which describes the expression, e.g. when hovered over it in a UI.
 
 #### Extended Resource Configuration
 
@@ -170,19 +182,19 @@ The following attributes are exported in the outputs of the module:
 
   Whether this module is enabled.
 
-<!-- all outputs in outputs.tf-->
+- **`iam`**
+
+  All attributes of the created `iam_binding` or `iam_member` or `iam_policy` resource according to the mode.
 
 ## External Documentation
 
 ### Google Documentation
-<!-- markdown-link-check-disable -->
 
-  - https://link-to-docs
+- <https://cloud.google.com/run/docs/reference/iam/roles>
 
 ### Terraform Google Provider Documentation:
 
-  - https://www.terraform.io/docs/providers/google/r/something.html
-<!-- markdown-link-check-disable -->
+- <https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/cloud_run_service_iam>
 
 ## Module Versioning
 
