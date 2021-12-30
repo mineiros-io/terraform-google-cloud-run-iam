@@ -97,8 +97,7 @@ section {
         }
 
         variable "module_depends_on" {
-          type           = any
-          readme_type    = "list(dependencies)"
+          type           = list(dependency)
           description    = <<-END
             A list of dependencies. Any object can be _assigned_ to this list to define a hidden external dependency.
           END
@@ -169,8 +168,7 @@ section {
         }
 
         variable "policy_bindings" {
-          type           = any
-          readme_type    = "list(policy_bindings)"
+          type           = list(policy_binding)
           description    = <<-END
             A list of IAM policy bindings.
           END
@@ -198,8 +196,7 @@ section {
           }
 
           attribute "condition" {
-            type           = any
-            readme_type    = "object(condition)"
+            type           = object(condition)
             description    = <<-END
               An IAM Condition for a given binding.
             END
