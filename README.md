@@ -50,7 +50,7 @@ Most basic usage just setting required arguments:
 
 ```hcl
 module "terraform-google-cloud-run-iam" {
-  source = "github.com/mineiros-io/terraform-google-cloud-run-iam?ref=v0.1.0"
+  source = "github.com/mineiros-io/terraform-google-cloud-run-iam?ref=v0.0.3"
 
   service  = "service-name"
   location = google_cloud_run_service.default.location
