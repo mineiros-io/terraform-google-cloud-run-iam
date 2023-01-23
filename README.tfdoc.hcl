@@ -1,5 +1,5 @@
 header {
-  image = "https://raw.githubusercontent.com/mineiros-io/brand/3bffd30e8bdbbde32c143e2650b2faa55f1df3ea/mineiros-primary-logo.svg"
+  image = "https://raw.githubusercontent.com/mineiros-io/brand/f2042a229e8feb4b188bea0aec4f6f2ad900c82e/mineiros-primary-logo.svg"
   url   = "https://mineiros.io/?ref=terraform-google-cloud-run-iam"
 
   badge "build" {
@@ -20,7 +20,7 @@ header {
     text  = "Terraform Version"
   }
 
-  badge "tf-gcp-provider" {
+  badge "terraform-google-provider" {
     image = "https://img.shields.io/badge/google-4-1A73E8.svg?logo=terraform"
     url   = "https://github.com/terraform-providers/terraform-provider-google/releases"
     text  = "Google Provider Version"
@@ -50,7 +50,7 @@ section {
   section {
     title   = "Module Features"
     content = <<-END
-      This module implements the following terraform resources:
+      This module implements the following Terraform resources:
 
       - `google_cloud_run_service_iam_binding`
       - `google_cloud_run_service_iam_member`
@@ -61,7 +61,7 @@ section {
   section {
     title   = "Getting Started"
     content = <<-END
-      Most basic usage just setting required arguments:
+      Most common usage of the module:
 
       ```hcl
       module "terraform-google-cloud-run-iam" {
@@ -69,8 +69,8 @@ section {
 
         service  = "service-name"
         location = google_cloud_run_service.default.location
-        role     = "roles/viewer"
-        members  = ["user:member@example.com"]
+        role     = "roles/run.admin"
+        members  = ["user:admin@example.com"]
       }
       ```
     END
@@ -79,35 +79,11 @@ section {
   section {
     title   = "Module Argument Reference"
     content = <<-END
-      See [variables.tf] and [examples/] for details and use-cases.
+      See [variables.tf] and [examples/] for details and use cases.
     END
 
     section {
       title = "Top-level Arguments"
-
-      section {
-        title = "Module Configuration"
-
-        variable "module_enabled" {
-          type        = bool
-          default     = true
-          description = <<-END
-            Specifies whether resources in the module will be created.
-          END
-        }
-
-        variable "module_depends_on" {
-          type           = list(dependency)
-          description    = <<-END
-            A list of dependencies. Any object can be _assigned_ to this list to define a hidden external dependency.
-          END
-          readme_example = <<-END
-            module_depends_on = [
-              google_network.network
-            ]
-          END
-        }
-      }
 
       section {
         title = "Main Resource Configuration"
@@ -142,13 +118,23 @@ section {
             - `projectOwner:{projectid}`: Owners of the given project. For example, `projectOwner:my-example-project`
             - `projectEditor:{projectid}`: Editors of the given project. For example, `projectEditor:my-example-project`
             - `projectViewer:{projectid}`: Viewers of the given project. For example, `projectViewer:my-example-project`
+            - `computed:{identifier}`: An existing key from `var.computed_members_map`.
           END
+        }
+
+        variable "computed_members_map" {
+          type        = map(string)
+          description = <<-END
+            A map of identifiers to identities to be replaced in 'var.members' or in members of `policy_bindings` to handle terraform computed values.
+            The format of each value must satisfy the format as described in `var.members`.
+         END
+          default     = {}
         }
 
         variable "role" {
           type        = string
           description = <<-END
-            The role that should be applied. Note that custom roles must be of the format `[projects|organizations]/{parent-name}/roles/{role-name}`.
+            The role that should be applied. Note that custom roles must be of the format `[projects|organizations]/{parent-name}/roles/{role-name}`. Omit if `policy_bindings` is set.
           END
         }
 
@@ -170,12 +156,12 @@ section {
         variable "policy_bindings" {
           type           = list(policy_binding)
           description    = <<-END
-            A list of IAM policy bindings.
+            A list of IAM policy bindings. Cannot be used at the same time as `role`.
           END
           readme_example = <<-END
             policy_bindings = [{
-              role    = "roles/viewer"
-              members = ["user:member@example.com"]
+              role    = "roles/run.admin"
+              members = ["user:admin@example.com"]
             }]
           END
 
@@ -202,8 +188,8 @@ section {
             END
             readme_example = <<-END
               condition = {
-                expression = "request.time < timestamp(\"2022-01-01T00:00:00Z\")"
-                title      = "expires_after_2021_12_31"
+                expression = "request.time < timestamp(\"2024-01-01T00:00:00Z\")"
+                title      = "expires_after_2023_12_31"
               }
             END
 
@@ -232,6 +218,30 @@ section {
           }
         }
       }
+
+      section {
+        title = "Module Configuration"
+
+        variable "module_enabled" {
+          type        = bool
+          default     = true
+          description = <<-END
+            Specifies whether resources in the module will be created.
+          END
+        }
+
+        variable "module_depends_on" {
+          type           = list(dependency)
+          description    = <<-END
+            A list of dependencies. Any object can be _assigned_ to this list to define a hidden external dependency.
+          END
+          readme_example = <<-END
+            module_depends_on = [
+              google_network.network
+            ]
+          END
+        }
+      }
     }
   }
 
@@ -242,10 +252,9 @@ section {
     END
 
     output "iam" {
-      type        = bool
+      type        = object(iam)
       description = <<-END
-        All attributes of the created `iam_binding` or `iam_member` or
-        `iam_policy` resource according to the mode.
+        All attributes of the created `google_cloud_run_service_iam_binding` or `google_cloud_run_service_iam_member` or `google_cloud_run_service_iam_policy` resource according to the mode.
       END
     }
   }
@@ -281,10 +290,10 @@ section {
     END
 
     section {
-      title   = "Backwards compatibility in `0.0.z` and `0.y.z` version"
+      title   = "Backward compatibility in `0.0.z` and `0.y.z` version"
       content = <<-END
-        - Backwards compatibility in versions `0.0.z` is **not guaranteed** when `z` is increased. (Initial development)
-        - Backwards compatibility in versions `0.y.z` is **not guaranteed** when `y` is increased. (Pre-release)
+        - Backward compatibility in versions `0.0.z` is **not guaranteed** when `z` is increased. (Initial development)
+        - Backward compatibility in versions `0.y.z` is **not guaranteed** when `y` is increased. (Pre-release)
       END
     }
   }
@@ -335,7 +344,7 @@ section {
       This module is licensed under the Apache License Version 2.0, January 2004.
       Please see [LICENSE] for full details.
 
-      Copyright &copy; 2020-2022 [Mineiros GmbH][homepage]
+      Copyright &copy; 2020-2023 [Mineiros GmbH][homepage]
     END
   }
 }

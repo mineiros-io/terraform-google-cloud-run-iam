@@ -1,4 +1,4 @@
-[<img src="https://raw.githubusercontent.com/mineiros-io/brand/3bffd30e8bdbbde32c143e2650b2faa55f1df3ea/mineiros-primary-logo.svg" width="400"/>](https://mineiros.io/?ref=terraform-google-cloud-run-iam)
+[<img src="https://raw.githubusercontent.com/mineiros-io/brand/f2042a229e8feb4b188bea0aec4f6f2ad900c82e/mineiros-primary-logo.svg" width="400"/>](https://mineiros.io/?ref=terraform-google-cloud-run-iam)
 
 [![Build Status](https://github.com/mineiros-io/terraform-google-cloud-run-iam/workflows/Tests/badge.svg)](https://github.com/mineiros-io/terraform-google-cloud-run-iam/actions)
 [![GitHub tag (latest SemVer)](https://img.shields.io/github/v/tag/mineiros-io/terraform-google-cloud-run-iam.svg?label=latest&sort=semver)](https://github.com/mineiros-io/terraform-google-cloud-run-iam/releases)
@@ -22,14 +22,14 @@ secure, and production-grade cloud infrastructure.
 - [Getting Started](#getting-started)
 - [Module Argument Reference](#module-argument-reference)
   - [Top-level Arguments](#top-level-arguments)
-    - [Module Configuration](#module-configuration)
     - [Main Resource Configuration](#main-resource-configuration)
+    - [Module Configuration](#module-configuration)
 - [Module Outputs](#module-outputs)
 - [External Documentation](#external-documentation)
   - [Google Documentation](#google-documentation)
   - [Terraform Google Provider Documentation:](#terraform-google-provider-documentation)
 - [Module Versioning](#module-versioning)
-  - [Backwards compatibility in `0.0.z` and `0.y.z` version](#backwards-compatibility-in-00z-and-0yz-version)
+  - [Backward compatibility in `0.0.z` and `0.y.z` version](#backward-compatibility-in-00z-and-0yz-version)
 - [About Mineiros](#about-mineiros)
 - [Reporting Issues](#reporting-issues)
 - [Contributing](#contributing)
@@ -38,7 +38,7 @@ secure, and production-grade cloud infrastructure.
 
 ## Module Features
 
-This module implements the following terraform resources:
+This module implements the following Terraform resources:
 
 - `google_cloud_run_service_iam_binding`
 - `google_cloud_run_service_iam_member`
@@ -46,7 +46,7 @@ This module implements the following terraform resources:
 
 ## Getting Started
 
-Most basic usage just setting required arguments:
+Most common usage of the module:
 
 ```hcl
 module "terraform-google-cloud-run-iam" {
@@ -54,36 +54,16 @@ module "terraform-google-cloud-run-iam" {
 
   service  = "service-name"
   location = google_cloud_run_service.default.location
-  role     = "roles/viewer"
-  members  = ["user:member@example.com"]
+  role     = "roles/run.admin"
+  members  = ["user:admin@example.com"]
 }
 ```
 
 ## Module Argument Reference
 
-See [variables.tf] and [examples/] for details and use-cases.
+See [variables.tf] and [examples/] for details and use cases.
 
 ### Top-level Arguments
-
-#### Module Configuration
-
-- [**`module_enabled`**](#var-module_enabled): *(Optional `bool`)*<a name="var-module_enabled"></a>
-
-  Specifies whether resources in the module will be created.
-
-  Default is `true`.
-
-- [**`module_depends_on`**](#var-module_depends_on): *(Optional `list(dependency)`)*<a name="var-module_depends_on"></a>
-
-  A list of dependencies. Any object can be _assigned_ to this list to define a hidden external dependency.
-
-  Example:
-
-  ```hcl
-  module_depends_on = [
-    google_network.network
-  ]
-  ```
 
 #### Main Resource Configuration
 
@@ -107,12 +87,20 @@ See [variables.tf] and [examples/] for details and use-cases.
   - `projectOwner:{projectid}`: Owners of the given project. For example, `projectOwner:my-example-project`
   - `projectEditor:{projectid}`: Editors of the given project. For example, `projectEditor:my-example-project`
   - `projectViewer:{projectid}`: Viewers of the given project. For example, `projectViewer:my-example-project`
+  - `computed:{identifier}`: An existing key from `var.computed_members_map`.
 
   Default is `[]`.
 
+- [**`computed_members_map`**](#var-computed_members_map): *(Optional `map(string)`)*<a name="var-computed_members_map"></a>
+
+  A map of identifiers to identities to be replaced in 'var.members' or in members of `policy_bindings` to handle terraform computed values.
+  The format of each value must satisfy the format as described in `var.members`.
+
+  Default is `{}`.
+
 - [**`role`**](#var-role): *(Optional `string`)*<a name="var-role"></a>
 
-  The role that should be applied. Note that custom roles must be of the format `[projects|organizations]/{parent-name}/roles/{role-name}`.
+  The role that should be applied. Note that custom roles must be of the format `[projects|organizations]/{parent-name}/roles/{role-name}`. Omit if `policy_bindings` is set.
 
 - [**`project`**](#var-project): *(Optional `string`)*<a name="var-project"></a>
 
@@ -126,14 +114,14 @@ See [variables.tf] and [examples/] for details and use-cases.
 
 - [**`policy_bindings`**](#var-policy_bindings): *(Optional `list(policy_binding)`)*<a name="var-policy_bindings"></a>
 
-  A list of IAM policy bindings.
+  A list of IAM policy bindings. Cannot be used at the same time as `role`.
 
   Example:
 
   ```hcl
   policy_bindings = [{
-    role    = "roles/viewer"
-    members = ["user:member@example.com"]
+    role    = "roles/run.admin"
+    members = ["user:admin@example.com"]
   }]
   ```
 
@@ -157,8 +145,8 @@ See [variables.tf] and [examples/] for details and use-cases.
 
     ```hcl
     condition = {
-      expression = "request.time < timestamp(\"2022-01-01T00:00:00Z\")"
-      title      = "expires_after_2021_12_31"
+      expression = "request.time < timestamp(\"2024-01-01T00:00:00Z\")"
+      title      = "expires_after_2023_12_31"
     }
     ```
 
@@ -176,14 +164,33 @@ See [variables.tf] and [examples/] for details and use-cases.
 
       An optional description of the expression. This is a longer text which describes the expression, e.g. when hovered over it in a UI.
 
+#### Module Configuration
+
+- [**`module_enabled`**](#var-module_enabled): *(Optional `bool`)*<a name="var-module_enabled"></a>
+
+  Specifies whether resources in the module will be created.
+
+  Default is `true`.
+
+- [**`module_depends_on`**](#var-module_depends_on): *(Optional `list(dependency)`)*<a name="var-module_depends_on"></a>
+
+  A list of dependencies. Any object can be _assigned_ to this list to define a hidden external dependency.
+
+  Example:
+
+  ```hcl
+  module_depends_on = [
+    google_network.network
+  ]
+  ```
+
 ## Module Outputs
 
 The following attributes are exported in the outputs of the module:
 
-- [**`iam`**](#output-iam): *(`bool`)*<a name="output-iam"></a>
+- [**`iam`**](#output-iam): *(`object(iam)`)*<a name="output-iam"></a>
 
-  All attributes of the created `iam_binding` or `iam_member` or
-  `iam_policy` resource according to the mode.
+  All attributes of the created `google_cloud_run_service_iam_binding` or `google_cloud_run_service_iam_member` or `google_cloud_run_service_iam_policy` resource according to the mode.
 
 ## External Documentation
 
@@ -205,10 +212,10 @@ Given a version number `MAJOR.MINOR.PATCH`, we increment the:
 2. `MINOR` version when we add functionality in a backwards compatible manner, and
 3. `PATCH` version when we make backwards compatible bug fixes.
 
-### Backwards compatibility in `0.0.z` and `0.y.z` version
+### Backward compatibility in `0.0.z` and `0.y.z` version
 
-- Backwards compatibility in versions `0.0.z` is **not guaranteed** when `z` is increased. (Initial development)
-- Backwards compatibility in versions `0.y.z` is **not guaranteed** when `y` is increased. (Pre-release)
+- Backward compatibility in versions `0.0.z` is **not guaranteed** when `z` is increased. (Initial development)
+- Backward compatibility in versions `0.y.z` is **not guaranteed** when `y` is increased. (Pre-release)
 
 ## About Mineiros
 
@@ -243,7 +250,7 @@ Run `make help` to see details on each available target.
 This module is licensed under the Apache License Version 2.0, January 2004.
 Please see [LICENSE] for full details.
 
-Copyright &copy; 2020-2022 [Mineiros GmbH][homepage]
+Copyright &copy; 2020-2023 [Mineiros GmbH][homepage]
 
 
 <!-- References -->
