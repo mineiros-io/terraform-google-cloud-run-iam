@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Add support for computed members
+
+### Removed
+- BREAKING: Remove support for Terraform versions before v1.0
+- BREAKING: Remove support for Terraform Google Provider version 3.x
+
 ## [0.0.3]
 
 ### Added
